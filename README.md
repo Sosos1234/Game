@@ -1,27 +1,21 @@
-# Treasure Sprint
+# Dungeon Master Roguelike
 
-Treasure Sprint is a small terminal game written in pure Python.
+Terminal roguelike in pure Python where you play as the Game Master of a small campaign.
 
-## Goal
+## Core idea
 
-Find the hidden treasure on a grid before your energy reaches zero.
+- You lead a party of exactly 3 heroes.
+- Each room gives you 5 cards:
+  - 2 event cards
+  - 3 monster cards
+- You are allowed to play only 2 cards from the hand.
+- Keep at least one hero alive until the campaign is completed.
 
 ## Controls
 
-- `w` - move up
-- `a` - move left
-- `s` - move down
-- `d` - move right
-- `help` - show instructions
+- `<n1> <n2>` - play two cards by number, for example `1 4`
+- `help` - print instructions
 - `q` - quit
-
-## Rules
-
-- Every move costs 1 energy.
-- Walking into a wall also costs 1 energy.
-- Traps cost 2 extra energy.
-- Coins give +25 score.
-- Treasure gives a large bonus based on remaining energy.
 
 ## Run
 

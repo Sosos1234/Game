@@ -1,81 +1,83 @@
 import unittest
 
-from game import GameConfig, GameState, Position, apply_move, create_game
+from game import (
+    CARD_EVENT,
+    CARD_MONSTER,
+    Card,
+    GameConfig,
+    create_game,
+    draw_hand,
+    parse_card_selection,
+    play_selected_cards,
+    resolve_card,
+)
 
 
-class GameLogicTests(unittest.TestCase):
-    def test_create_game_places_objects_without_overlap(self) -> None:
-        config = GameConfig(board_size=5, trap_count=4, coin_count=3, starting_energy=10)
-        state = create_game(config=config, seed=11)
+class RoguelikeGameTests(unittest.TestCase):
+    def test_create_game_starts_with_three_heroes(self) -> None:
+        state = create_game(seed=1)
+        self.assertEqual(len(state.party), 3)
+        self.assertEqual(state.survivors, 3)
 
-        start = Position(2, 2)
-        self.assertEqual(state.player, start)
-        self.assertNotEqual(state.treasure, start)
-        self.assertEqual(len(state.traps), 4)
-        self.assertEqual(len(state.coins), 3)
+    def test_draw_hand_has_2_event_and_3_monster_cards(self) -> None:
+        state = create_game(seed=10)
+        hand = draw_hand(state)
 
-        occupied = {start, state.treasure} | state.traps | state.coins
-        self.assertEqual(len(occupied), 1 + 1 + 4 + 3)
+        self.assertEqual(len(hand), 5)
+        self.assertEqual(sum(card.card_type == CARD_EVENT for card in hand), 2)
+        self.assertEqual(sum(card.card_type == CARD_MONSTER for card in hand), 3)
 
-    def test_invalid_command_does_not_change_energy_or_position(self) -> None:
-        state = self._make_state(energy=5)
-        apply_move(state, "x")
+    def test_parse_card_selection_accepts_exactly_two_unique_picks(self) -> None:
+        picks, error = parse_card_selection("1 4", hand_size=5, playable_cards=2)
+        self.assertEqual(picks, (0, 3))
+        self.assertIsNone(error)
 
-        self.assertEqual(state.player, Position(1, 1))
-        self.assertEqual(state.energy, 5)
+    def test_parse_card_selection_rejects_invalid_input(self) -> None:
+        picks, error = parse_card_selection("2 2", hand_size=5, playable_cards=2)
+        self.assertIsNone(picks)
+        self.assertIn("cannot play the same card twice", error or "")
 
-    def test_hitting_wall_costs_energy_and_stays_in_place(self) -> None:
-        state = self._make_state(energy=5, start=Position(0, 0))
-        apply_move(state, "w")
+        picks, error = parse_card_selection("1 2 3", hand_size=5, playable_cards=2)
+        self.assertIsNone(picks)
+        self.assertIn("exactly 2 cards", error or "")
 
-        self.assertEqual(state.player, Position(0, 0))
-        self.assertEqual(state.energy, 4)
+    def test_play_selected_cards_requires_exactly_two_cards(self) -> None:
+        state = create_game(seed=11)
+        hand = draw_hand(state)
+        with self.assertRaises(ValueError):
+            play_selected_cards(state, hand, (0,))
 
-    def test_coin_increases_score_and_is_removed(self) -> None:
-        coin = Position(1, 2)
-        state = self._make_state(energy=5, coins={coin})
-        apply_move(state, "d")
+    def test_campfire_event_recovers_party_hp(self) -> None:
+        config = GameConfig(hero_hp=10)
+        state = create_game(config=config, seed=5)
+        for hero in state.party:
+            hero.hp = 5
 
-        self.assertEqual(state.player, coin)
-        self.assertEqual(state.energy, 4)
-        self.assertEqual(state.score, 25)
-        self.assertNotIn(coin, state.coins)
-
-    def test_trap_costs_extra_energy(self) -> None:
-        trap = Position(1, 2)
-        state = self._make_state(energy=5, traps={trap})
-        apply_move(state, "d")
-
-        self.assertEqual(state.player, trap)
-        self.assertEqual(state.energy, 2)
-
-    def test_treasure_sets_victory_and_adds_bonus_score(self) -> None:
-        treasure = Position(1, 2)
-        state = self._make_state(energy=5, treasure=treasure)
-        apply_move(state, "d")
-
-        self.assertTrue(state.found_treasure)
-        self.assertEqual(state.energy, 4)
-        self.assertEqual(state.score, 120)
-
-    @staticmethod
-    def _make_state(
-        energy: int,
-        start: Position = Position(1, 1),
-        treasure: Position = Position(2, 2),
-        traps: set[Position] | None = None,
-        coins: set[Position] | None = None,
-    ) -> GameState:
-        config = GameConfig(board_size=3, trap_count=0, coin_count=0, starting_energy=energy)
-        return GameState(
-            config=config,
-            player=start,
-            treasure=treasure,
-            traps=traps or set(),
-            coins=coins or set(),
-            energy=energy,
-            visited={start},
+        card = Card(
+            name="Campfire Respite",
+            card_type=CARD_EVENT,
+            description="All living heroes recover 2 HP.",
+            effect_id="campfire",
+            potency=2,
         )
+        resolve_card(state, card)
+
+        self.assertEqual([hero.hp for hero in state.party], [7, 7, 7])
+
+    def test_low_danger_monster_is_beaten_by_strong_party(self) -> None:
+        config = GameConfig(hero_hp=12, hero_power=5)
+        state = create_game(config=config, seed=7)
+        card = Card(
+            name="Training Beast",
+            card_type=CARD_MONSTER,
+            description="A very weak foe.",
+            danger=0,
+            reward=9,
+        )
+        resolve_card(state, card)
+
+        self.assertGreaterEqual(state.score, 9)
+        self.assertEqual([hero.hp for hero in state.party], [12, 12, 12])
 
 
 if __name__ == "__main__":
