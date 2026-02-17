@@ -1,29 +1,40 @@
 # Dungeon Master Roguelike
 
-Terminal roguelike in pure Python where you play as the Game Master of a small campaign.
+Проект содержит две версии игры:
 
-## Core idea
+1. **3D-версия в браузере** (основная)  
+2. **CLI-версия в терминале** (`game.py`)
 
-- You lead a party of exactly 3 heroes.
-- Each room gives you 5 cards:
-  - 2 event cards
-  - 3 monster cards
-- You are allowed to play only 2 cards from the hand.
-- Keep at least one hero alive until the campaign is completed.
+## Правила (общая идея)
 
-## Controls
+- Ты — ГеймМастер кампании.
+- В отряде ровно 3 героя.
+- Каждый раунд даёт 5 карт:
+  - 2 карты событий
+  - 3 карты монстров
+- Разыграть можно только 2 карты.
 
-- `<n1> <n2>` - play two cards by number, for example `1 4`
-- `help` - print instructions
-- `q` - quit
+## Запуск 3D-версии
 
-## Run
+Из корня проекта:
+
+```bash
+python3 -m http.server 8000
+```
+
+Потом открой в браузере:
+
+```text
+http://localhost:8000/web/
+```
+
+## Запуск CLI-версии
 
 ```bash
 python3 game.py
 ```
 
-## Tests
+## Тесты (логика CLI)
 
 ```bash
 python3 -m unittest discover -s tests -v

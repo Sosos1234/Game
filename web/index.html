@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dungeon Master Roguelike 3D</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <main id="hud">
+    <header class="panel">
+      <h1>Dungeon Master Roguelike 3D</h1>
+      <p>Ты — ГеймМастер кампании. На ход даётся 5 карт: 2 события и 3 монстра.</p>
+      <p>Разыграть можно только 2 карты.</p>
+    </header>
+
+    <section class="panel">
+      <div id="status"></div>
+      <div id="party"></div>
+      <div id="log"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Рука</h2>
+      <div id="hand" class="cards"></div>
+      <div class="actions">
+        <button id="playBtn">Разыграть 2 карты</button>
+        <button id="restartBtn" class="secondary">Новая кампания</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./game3d.js"></script>
+</body>
+</html>
